@@ -1,0 +1,124 @@
+﻿@page "/listado"
+
+@using System.Net.Http.Json
+@using Lirmi.Challenge.Models.Dtos
+@using Lirmi.Challenge.WebApp.Services
+
+<PageTitle>Listado</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Listado de Colegios</MudText>
+
+<MudTable Items="@Colegios" Hover="true" Breakpoint="Breakpoint.None" Elevation="1" 
+Style="@($"border: 1px solid {Colors.BlueGrey.Darken4};")">
+	<ColGroup>
+		<col style="width:10%;" />
+		<col style="width:60%;" />
+		<col style="width:30%;" />
+	</ColGroup>
+	<HeaderContent>
+		<MudTh Style="@($"background:{Colors.BlueGrey.Darken4};color:white;")">IdColegio</MudTh>
+		<MudTh Style="@($"background:{Colors.BlueGrey.Darken4};color:white;")">Colegio</MudTh>
+		<MudTh Style="@($"background:{Colors.BlueGrey.Darken4};color:white;")"></MudTh>
+	</HeaderContent>
+	<RowTemplate>
+		<MudTd DataLabel="IdColegio">@context.IdColegio</MudTd>
+		<MudTd DataLabel="Colegio">@context.Nombre</MudTd>
+		<MudTd><MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => BtnMostrarCurso(context.IdColegio))">@((context.MostrarDetalle == true)? "Ocultar" : "Mostrar") Cursos</MudButton></MudTd>
+	</RowTemplate>
+	<ChildRowContent>
+		@if (context.MostrarDetalle)
+		{
+			<MudTr>
+				<td colspan="4">
+					<MudCard Elevation="2">
+						<MudCardHeader>
+							<CardHeaderContent>
+								<MudText Typo="Typo.body1">Cursos asociados al colegio <strong>@context.Nombre</strong></MudText>
+							</CardHeaderContent>
+						</MudCardHeader>
+						<MudCardContent Class="pa-0">
+							<MudTable Items="@context.Cursos" Context="CursosContext" Hover="true" Breakpoint="Breakpoint.None" Elevation="0" 
+							Style="@($"border: 1px solid {Colors.Blue.Darken4};margin:0 5px")">
+								<ColGroup>
+									<col style="width:10%;" />
+									<col style="width:60%;" />
+									<col style="width:30%;" />
+								</ColGroup>
+								<HeaderContent>
+									<MudTh Style="@($"background:{Colors.Blue.Darken4};color:white;")">IdCurso</MudTh>
+									<MudTh Style="@($"background:{Colors.Blue.Darken4};color:white;")">Curso</MudTh>
+									<MudTh Style="@($"background:{Colors.Blue.Darken4};color:white;")"></MudTh>
+								</HeaderContent>
+								<RowTemplate>
+									<MudTd DataLabel="IdCurso">@CursosContext.IdCurso</MudTd>
+									<MudTd DataLabel="Curso">@CursosContext.Nombre</MudTd>
+									<MudTd><MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => BtnMostrarAsignatura(context.IdColegio, CursosContext.IdCurso))">@((CursosContext.MostrarDetalle == true)? "Ocultar" : "Mostrar") Asignaturas</MudButton></MudTd>
+								</RowTemplate>
+								<ChildRowContent>
+									@if (CursosContext.MostrarDetalle)
+									{
+										<MudTr>
+											<td colspan="4">
+												<MudCard Elevation="3">
+													<MudCardHeader>
+														<CardHeaderContent>
+															<MudText Typo="Typo.body1">Asignaturas asociadas al curso <strong>@CursosContext.Nombre</strong></MudText>
+														</CardHeaderContent>
+													</MudCardHeader>
+												</MudCard>
+												<MudCardContent Class="pa-0">
+													<MudTable Items="@CursosContext.Asignaturas" Context="AsignaturaContext" Hover="true" Breakpoint="Breakpoint.None" Elevation="0" 
+													Style="@($"border: 1px solid {Colors.Green.Darken4};margin:0 5px")">
+														<ColGroup>
+															<col style="width:10%;" />
+															<col style="width:90%;" />
+														</ColGroup>
+														<HeaderContent>
+															<MudTh Style="@($"background:{Colors.Green.Darken4};color:white;")">IdAsignatura</MudTh>
+															<MudTh Style="@($"background:{Colors.Green.Darken4};color:white;")">Asignatura</MudTh>
+														</HeaderContent>
+														<RowTemplate>
+															<MudTd DataLabel="IdAsignatura">@AsignaturaContext.IdAsignatura</MudTd>
+															<MudTd DataLabel="Asignatura">@AsignaturaContext.Nombre</MudTd>
+														</RowTemplate>
+													</MudTable>
+												</MudCardContent>
+											</td>
+										</MudTr>
+									}
+								</ChildRowContent>
+							</MudTable>
+						</MudCardContent>
+					</MudCard>
+				</td>
+			</MudTr>
+		}
+	</ChildRowContent>
+</MudTable>
+
+@code
+{
+    [Inject]
+    public IListadoService ListadoService { get; set; }
+
+    public IList<ColegioDto> Colegios { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Colegios = (await ListadoService.GetColegios()).ToList();
+    }
+
+    private void BtnMostrarCurso(int idColegio)
+    {
+        ColegioDto colegio = Colegios.First(c => c.IdColegio == idColegio);
+        colegio.MostrarDetalle = !colegio.MostrarDetalle;
+    }
+
+    private void BtnMostrarAsignatura(int idColegio, int idCurso)
+    {
+        ColegioDto colegio = Colegios.First(c => c.IdColegio == idColegio);
+        CursoDto curso = colegio.Cursos.First(c => c.IdCurso == idCurso);
+
+        curso.MostrarDetalle = !curso.MostrarDetalle;
+    }
+}
